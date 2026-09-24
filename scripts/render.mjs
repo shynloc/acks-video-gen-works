@@ -1,30 +1,32 @@
-// Deterministic frame renderer for the ACKS promo.
+// Deterministic frame renderer shared by the video projects in this repo.
 //
-// The page in src/index.html exposes window.renderFrame(t). Nothing on the page
-// animates on its own (no CSS transitions, no requestAnimationFrame), so every
-// frame is a pure function of t and frames can be captured in parallel.
+// A project's src/index.html exposes window.renderFrame(t) (and optionally
+// window.__duration). Nothing on the page animates on its own (no CSS
+// transitions, no requestAnimationFrame), so every frame is a pure function of t
+// and frames can be captured in parallel.
 //
 //   node scripts/render.mjs                 render every frame to frames/
 //   node scripts/render.mjs --stills 1,4.5  render single frames to output/preview/
 //   node scripts/render.mjs --cues          write the sound cue list to .cache/cues.json
 //   node scripts/render.mjs --workers 2 --from 300 --to 600
+//   node scripts/render.mjs --project jintaoblog-611 ...   same, for a sub-project
 
 import { createServer } from 'node:http'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { extname, join, normalize, resolve } from 'node:path'
+import { extname, join, normalize, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const FPS = 30
-const DURATION = 45
-const TOTAL_FRAMES = FPS * DURATION
+const DEFAULT_DURATION = 45
 
 const args = process.argv.slice(2)
 const option = (name, fallback) => {
   const index = args.indexOf(`--${name}`)
   return index === -1 ? fallback : args[index + 1]
 }
+const PROJECT = join(ROOT, option('project', '.'))
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -76,9 +78,13 @@ async function openPage(browser, url) {
       console.error('[page]', message.text())
   })
   await page.goto(url)
-  await page.waitForFunction(() => window.__ready === true, null, {
-    timeout: 120_000,
-  })
+  await page.waitForFunction(
+    () => window.__ready === true || window.__bootError !== undefined,
+    null,
+    { timeout: 120_000 },
+  )
+  const bootError = await page.evaluate(() => window.__bootError)
+  if (bootError) throw new Error(`page failed to boot: ${bootError}`)
   const missing = await page.evaluate(() => window.__missingFonts ?? [])
   if (missing.length) throw new Error(`fonts not loaded: ${missing.join(', ')}`)
   // Raw CDP capture: still lossless PNG, but with fast (low-effort) compression.
@@ -96,7 +102,8 @@ async function capture(page, t, path) {
 }
 
 const server = await serve()
-const url = `http://127.0.0.1:${server.address().port}/src/index.html`
+const pagePath = relative(ROOT, join(PROJECT, 'src', 'index.html'))
+const url = `http://127.0.0.1:${server.address().port}/${pagePath}`
 const browser = await chromium.launch()
 
 try {
@@ -104,12 +111,12 @@ try {
   if (args.includes('--cues')) {
     const page = await openPage(browser, url)
     const cues = await page.evaluate(() => window.__cues)
-    await mkdir(join(ROOT, '.cache'), { recursive: true })
-    const path = join(ROOT, '.cache', 'cues.json')
+    await mkdir(join(PROJECT, '.cache'), { recursive: true })
+    const path = join(PROJECT, '.cache', 'cues.json')
     await writeFile(path, `${JSON.stringify(cues, null, 2)}\n`)
     console.log(`${path} (${cues.length} cues)`)
   } else if (stills) {
-    const outDir = join(ROOT, 'output', 'preview')
+    const outDir = join(PROJECT, 'output', 'preview')
     await mkdir(outDir, { recursive: true })
     const page = await openPage(browser, url)
     for (const value of stills.split(',')) {
@@ -119,11 +126,15 @@ try {
       console.log(path)
     }
   } else {
+    const probe = await openPage(browser, url)
+    const duration = await probe.evaluate(() => window.__duration ?? null)
+    await probe.close()
+    const totalFrames = Math.round(FPS * (duration ?? DEFAULT_DURATION))
     const workers = Number(option('workers', 4))
     const from = Number(option('from', 0))
-    const to = Number(option('to', TOTAL_FRAMES))
-    const outDir = join(ROOT, 'frames')
-    if (from === 0 && to === TOTAL_FRAMES)
+    const to = Number(option('to', totalFrames))
+    const outDir = join(PROJECT, 'frames')
+    if (from === 0 && to === totalFrames)
       await rm(outDir, { recursive: true, force: true })
     await mkdir(outDir, { recursive: true })
 

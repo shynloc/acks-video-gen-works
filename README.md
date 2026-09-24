@@ -1,3 +1,14 @@
+# ACKS 视频作品
+
+本仓库放可以完整复现的竖屏视频工程，共用一套逐帧渲染管线（`scripts/render.mjs`：HTML 时间轴 → Playwright 截帧 → ffmpeg）。
+
+| 作品 | 目录 | 时长 |
+|---|---|---|
+| ACKS 官网宣传片 | 仓库根目录（下文） | 45 秒 |
+| 别再做 AI Slop 了（博客 611 讲解视频） | [`jintaoblog-611/`](jintaoblog-611/README.md) | 7 分 42 秒 |
+
+---
+
 # ACKS 官网宣传片 · 45 秒 · 9:16
 
 为 [acks.com.cn](https://acks.com.cn/)（ACKS 爱驰科驶）制作的竖屏宣传片，以及可以完整复现它的渲染工程。

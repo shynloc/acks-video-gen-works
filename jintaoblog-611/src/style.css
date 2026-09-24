@@ -1,0 +1,495 @@
+/* 别再做 AI Slop 了 · 1080 × 1920
+ * Visual system = the blog's own Scrapboard theme tokens (软木板剪贴本):
+ * cork board, paper cards, washi tape, DYMO labels, rubber stamps, Courier. */
+
+@font-face {
+  font-family: 'CJK Punct';
+  font-weight: 400;
+  src: url(../../node_modules/@fontsource/noto-sans-sc/files/noto-sans-sc-117-400-normal.woff2)
+    format('woff2');
+  unicode-range: U+2018-201F;
+}
+
+@font-face {
+  font-family: 'CJK Punct';
+  font-weight: 700;
+  src: url(../../node_modules/@fontsource/noto-sans-sc/files/noto-sans-sc-117-700-normal.woff2)
+    format('woff2');
+  unicode-range: U+2018-201F;
+}
+
+@font-face {
+  font-family: 'CJK Punct Serif';
+  font-weight: 400;
+  src: url(../../node_modules/@fontsource/noto-serif-sc/files/noto-serif-sc-117-400-normal.woff2)
+    format('woff2');
+  unicode-range: U+2018-201F;
+}
+
+:root {
+  --board: #d6cbbd;
+  --paper: #f9f6f0;
+  --ink: #1a1a1a;
+  --ink-light: #524f46;
+  --red: #cc3333;
+  --dymo: #222222;
+  --tape: rgba(255, 255, 230, 0.75);
+  --washi: rgba(200, 220, 255, 0.6);
+  --cyber-bg: #0d1117;
+  --cyber-green: #39ff14;
+  --teal: #397c78;
+  --brass: #b59a62;
+  --shadow-paper: 0 4px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-floating:
+    0 12px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-hard: 4px 4px 0 rgba(0, 0, 0, 0.15);
+
+  --sans: 'CJK Punct', 'Inter', 'Noto Sans SC', sans-serif;
+  --mono: 'Courier Prime', 'CJK Punct', 'Noto Sans SC', monospace;
+  --code: 'Fira Code', 'Noto Sans SC', monospace;
+  --hand: 'CJK Punct', 'LXGW WenKai', serif;
+  --serif: 'CJK Punct Serif', 'Noto Serif SC', serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 1080px;
+  height: 1920px;
+  overflow: hidden;
+  background: #000;
+}
+
+#stage {
+  position: relative;
+  width: 1080px;
+  height: 1920px;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  font-kerning: normal;
+}
+
+#board {
+  position: absolute;
+  inset: 0;
+  background: var(--board) url(assets/gen/board.png);
+  background-size: 512px 512px;
+}
+
+#vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    125% 80% at 50% 42%,
+    rgba(0, 0, 0, 0) 55%,
+    rgba(40, 28, 12, 0.16) 100%
+  );
+  pointer-events: none;
+}
+
+#scenes,
+.scene {
+  position: absolute;
+  inset: 0;
+}
+
+.scene {
+  visibility: hidden;
+}
+
+/* ---------- Scrapboard components ---------- */
+
+.paper {
+  background: var(--paper) url(assets/gen/paper.png);
+  background-size: 512px 512px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-paper);
+}
+
+.paper.lift {
+  box-shadow: var(--shadow-floating);
+}
+
+.dymo {
+  display: inline-block;
+  padding: 6px 16px 7px;
+  background: var(--dymo);
+  color: #fff;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-radius: 3px;
+  box-shadow:
+    inset 1px 1px 2px rgba(255, 255, 255, 0.4),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.8),
+    2px 2px 4px rgba(0, 0, 0, 0.3);
+  text-shadow: -1px -1px 0 rgba(0, 0, 0, 0.8);
+}
+
+.dymo.red {
+  background: #9e2424;
+  color: #fff;
+}
+
+.stamp {
+  display: inline-block;
+  padding: 4px 18px 6px;
+  border: 5px solid currentColor;
+  border-radius: 6px;
+  color: var(--red);
+  font-family: var(--mono);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  -webkit-mask-image: url(assets/gen/stamp.png);
+  mask-image: url(assets/gen/stamp.png);
+  -webkit-mask-size: 300px 300px;
+  mask-size: 300px 300px;
+}
+
+.tape {
+  width: 150px;
+  height: 42px;
+  background: var(--tape);
+  clip-path: polygon(0 4%, 100% 0, 97% 96%, 2% 100%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.tape.washi {
+  background: var(--washi);
+}
+
+.hand {
+  font-family: var(--hand);
+  font-weight: 500;
+}
+
+.red {
+  color: var(--red);
+}
+
+.muted {
+  color: var(--ink-light);
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+svg.ink {
+  overflow: visible;
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- global chrome ---------- */
+
+#topbar {
+  position: absolute;
+  left: 84px;
+  right: 84px;
+  top: 150px;
+  height: 64px;
+}
+
+#topbar .path {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--ink-light);
+}
+
+#topbar .dymo {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-size: 24px;
+  transform: rotate(-1.5deg);
+}
+
+#topbar .progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 62px;
+  height: 3px;
+  background: rgba(26, 26, 26, 0.12);
+}
+
+#topbar .progress b {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  background: var(--red);
+  transform-origin: left center;
+}
+
+#subtitle {
+  position: absolute;
+  left: 60px;
+  right: 60px;
+  top: 1398px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#subtitle span {
+  display: inline-block;
+  max-width: 960px;
+  padding: 12px 28px 14px;
+  background: rgba(249, 246, 240, 0.96);
+  box-shadow: var(--shadow-paper);
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+#subtitle span:empty {
+  display: none;
+}
+
+/* ---------- shared scene typography ---------- */
+
+.h1 {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 84px;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+}
+
+.h2 {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 60px;
+  line-height: 1.25;
+}
+
+.lead {
+  font-family: var(--hand);
+  font-weight: 500;
+  font-size: 44px;
+  line-height: 1.45;
+  color: var(--ink-light);
+}
+
+.note {
+  font-family: var(--hand);
+  font-weight: 700;
+  color: var(--red);
+}
+
+.typing::after {
+  content: '';
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  margin-left: 0.08em;
+  vertical-align: -0.12em;
+  background: currentColor;
+}
+
+/* photo print (screenshots) */
+.photo {
+  background: #fff;
+  padding: 14px 14px 0;
+  box-shadow: var(--shadow-floating);
+}
+
+.photo .shot {
+  position: relative;
+  overflow: hidden;
+  background: #eee;
+}
+
+.photo .shot img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.photo .cap {
+  position: relative;
+  height: 48px;
+  padding-top: 8px;
+  font-family: var(--hand);
+  font-size: 26px;
+  color: var(--ink-light);
+  white-space: nowrap;
+}
+
+/* the deliberately bad "AI slop" page */
+.slop-page {
+  overflow: hidden;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: var(--shadow-floating);
+  font-family: 'Inter', sans-serif;
+}
+
+.slop-page .bar {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 54px;
+  background: #ececef;
+}
+
+.slop-page .bar i {
+  left: 110px;
+  right: 110px;
+  top: 12px;
+  height: 30px;
+  border-radius: 15px;
+  background: #fff;
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 18px;
+  line-height: 30px;
+  text-align: center;
+  color: #777;
+}
+
+.slop-page .grad {
+  left: 0;
+  right: 0;
+  top: 54px;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    #7c3aed 0%,
+    #6366f1 40%,
+    #3b82f6 72%,
+    #06b6d4 100%
+  );
+}
+
+.slop-page .hero {
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #fff;
+}
+
+.slop-card {
+  border-radius: 34px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 20px 40px rgba(30, 10, 80, 0.35);
+}
+
+.slop-card .emo {
+  left: 32px;
+  top: 30px;
+  width: 84px;
+  height: 84px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.24);
+  font-size: 46px;
+  line-height: 84px;
+  text-align: center;
+}
+
+.slop-card .ln {
+  height: 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* terminal (step 2) */
+.term {
+  background: var(--cyber-bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow-floating);
+  overflow: hidden;
+}
+
+.term .bar {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 52px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  font-family: var(--code);
+  font-size: 22px;
+  line-height: 52px;
+  padding-left: 26px;
+  color: #8b949e;
+}
+
+.term .body {
+  left: 30px;
+  right: 30px;
+  top: 78px;
+  font-family: var(--code);
+  font-size: 25px;
+  line-height: 1.62;
+  color: #c9d1d9;
+  white-space: pre-wrap;
+}
+
+.term .body .p {
+  color: var(--cyber-green);
+}
+
+/* table */
+.tbl .row {
+  left: 36px;
+  right: 36px;
+  border-bottom: 1px dashed rgba(26, 26, 26, 0.2);
+}
+
+.tbl .row > div {
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  font-size: 25px;
+  line-height: 1.3;
+}
+
+.tbl .head > div {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 1px;
+  color: var(--ink-light);
+}
+
+.tbl .name {
+  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  font-weight: 700;
+}
