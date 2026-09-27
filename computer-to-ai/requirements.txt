@@ -1,0 +1,5 @@
+# Soundtrack, loudness normalisation, cover image
+numpy==2.4.6
+scipy==1.17.1
+pillow==12.3.0
+imageio-ffmpeg==0.6.0
