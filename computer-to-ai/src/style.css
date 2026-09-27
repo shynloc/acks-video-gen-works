@@ -1,0 +1,517 @@
+/* 开关的觉醒 · 1080 × 1920
+ *
+ * One stage, twelve eras. Each scene brings its own palette and type; the
+ * chrome (#hud, #subtitle) restyles itself from the era class on #stage, so the
+ * whole picture “upgrades” together at every scene change.
+ */
+
+@font-face {
+  font-family: 'CJK Punct';
+  font-weight: 400;
+  src: url(../../node_modules/@fontsource/noto-sans-sc/files/noto-sans-sc-117-400-normal.woff2)
+    format('woff2');
+  unicode-range: U+2018-201F;
+}
+
+@font-face {
+  font-family: 'CJK Punct';
+  font-weight: 700;
+  src: url(../../node_modules/@fontsource/noto-sans-sc/files/noto-sans-sc-117-700-normal.woff2)
+    format('woff2');
+  unicode-range: U+2018-201F;
+}
+
+:root {
+  --sans: 'CJK Punct', 'Inter', 'Noto Sans SC', sans-serif;
+  --grot: 'CJK Punct', 'Space Grotesk', 'Noto Sans SC', sans-serif;
+  --mono: 'JetBrains Mono', 'Noto Sans SC', monospace;
+  --code: 'Fira Code', 'Noto Sans SC', monospace;
+  --type: 'Courier Prime', 'Noto Serif SC', monospace;
+  --hand: 'CJK Punct', 'LXGW WenKai', serif;
+  --serif: 'Noto Serif SC', serif;
+
+  --paper: #efe7d4;
+  --graphite: #37352f;
+  --tube: #ffb45a;
+  --film: #e9dfc9;
+  --blue: #0f3f82;
+  --line: #d4e8ff;
+  --phosphor: #3dff72;
+  --teal: #008080;
+  --gray: #c0c0c0;
+  --ink: #141414;
+  --seal: #b8322a;
+  --amber: #ffb000;
+  --cream: #f2efe6;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 1080px;
+  height: 1920px;
+  overflow: hidden;
+  background: #000;
+}
+
+#stage {
+  position: relative;
+  width: 1080px;
+  height: 1920px;
+  overflow: hidden;
+  background: #000;
+  font-family: var(--sans);
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+#scenes,
+.scene,
+#fx {
+  position: absolute;
+  inset: 0;
+}
+
+.scene {
+  overflow: hidden;
+  visibility: hidden;
+}
+
+#fx {
+  pointer-events: none;
+  z-index: 20;
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+}
+
+canvas.full {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1080px;
+  height: 1920px;
+}
+
+/* ---------------------------------------------------------------- HUD */
+
+#hud {
+  position: absolute;
+  left: 64px;
+  right: 64px;
+  top: 104px;
+  height: 170px;
+  z-index: 30;
+  pointer-events: none;
+  color: var(--hud, #fff);
+  font-family: var(--mono);
+}
+
+#year {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 96px;
+  display: flex;
+  font-size: 88px;
+  font-weight: 700;
+  line-height: 96px;
+  letter-spacing: 0.02em;
+  font-family: var(--hud-font, var(--mono));
+}
+
+#year .col {
+  position: relative;
+  width: 0.62em;
+  height: 96px;
+  overflow: hidden;
+}
+
+#year .col b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-weight: inherit;
+}
+
+#year .now {
+  font-family: var(--sans);
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+#engine {
+  position: absolute;
+  right: 0;
+  top: 14px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 26px 0 20px;
+  border: 3px solid currentColor;
+  border-radius: var(--hud-radius, 0);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+#engine i {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+#engine span::before {
+  content: '渲染 · ';
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+#rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 128px;
+  height: 20px;
+}
+
+#rail b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 9px;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.35;
+}
+
+#rail em {
+  position: absolute;
+  left: 0;
+  top: 9px;
+  height: 2px;
+  width: 100%;
+  background: currentColor;
+  transform-origin: left center;
+}
+
+#rail i {
+  position: absolute;
+  top: 3px;
+  width: 3px;
+  height: 14px;
+  margin-left: -1px;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+#rail u {
+  position: absolute;
+  top: 0;
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 6px var(--hud-halo, rgba(255, 255, 255, 0.2));
+}
+
+/* ---------------------------------------------------------------- subtitles */
+
+#subtitle {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  top: 1430px;
+  height: 120px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#subtitle span {
+  display: inline-block;
+  max-width: 1000px;
+  padding: 14px 30px 16px;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 46px;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+#subtitle span:empty {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- per-era chrome */
+
+.era-cold {
+  --hud: #fff;
+}
+
+.era-turing {
+  --hud: var(--graphite);
+  --hud-font: var(--hand);
+  --hud-halo: rgba(55, 53, 47, 0.15);
+}
+.era-turing #engine {
+  border-width: 2px;
+  border-style: dashed;
+  font-family: var(--hand);
+}
+.era-turing #subtitle span {
+  font-family: var(--hand);
+  font-size: 50px;
+  color: var(--graphite);
+  background: rgba(250, 246, 234, 0.94);
+  box-shadow: 0 2px 0 rgba(55, 53, 47, 0.25);
+  border: 2px solid rgba(55, 53, 47, 0.5);
+}
+
+.era-eniac {
+  --hud: var(--film);
+  --hud-font: var(--type);
+  --hud-halo: rgba(233, 223, 201, 0.18);
+}
+.era-eniac #engine {
+  font-family: var(--serif);
+  border-width: 2px;
+  outline: 2px solid var(--film);
+  outline-offset: 5px;
+}
+.era-eniac #subtitle span {
+  font-family: var(--serif);
+  font-weight: 700;
+  color: var(--film);
+  background: #0b0906;
+  border: 3px double var(--film);
+  letter-spacing: 0.04em;
+}
+
+.era-chip {
+  --hud: var(--line);
+  --hud-halo: rgba(212, 232, 255, 0.2);
+}
+.era-chip #subtitle span {
+  font-family: var(--mono);
+  color: #fff;
+  background: rgba(10, 42, 92, 0.9);
+  border: 2px solid var(--line);
+}
+
+.era-moon {
+  --hud: var(--phosphor);
+  --hud-font: var(--code);
+  --hud-halo: rgba(61, 255, 114, 0.2);
+}
+.era-moon #hud {
+  text-shadow:
+    0 0 8px rgba(61, 255, 114, 0.9),
+    0 0 26px rgba(61, 255, 114, 0.45);
+}
+.era-moon #engine,
+.era-moon #rail u,
+.era-moon #rail em {
+  box-shadow: 0 0 14px rgba(61, 255, 114, 0.6);
+}
+.era-moon #subtitle span {
+  font-family: var(--code);
+  font-weight: 400;
+  color: var(--phosphor);
+  background: rgba(1, 12, 4, 0.92);
+  border: 2px solid rgba(61, 255, 114, 0.6);
+  text-shadow: 0 0 10px rgba(61, 255, 114, 0.8);
+}
+
+.era-pc {
+  --hud: #fff1e8;
+  --hud-font: var(--mono);
+  --hud-halo: #ff004d;
+}
+.era-pc #engine {
+  border: none;
+  background: #1d2b53;
+  box-shadow:
+    0 -6px 0 0 #fff1e8,
+    0 6px 0 0 #fff1e8,
+    -6px 0 0 0 #fff1e8,
+    6px 0 0 0 #fff1e8;
+}
+.era-pc #engine i {
+  border-radius: 0;
+  background: #ff004d;
+}
+.era-pc #rail u {
+  border-radius: 0;
+}
+.era-pc #subtitle span {
+  color: #fff1e8;
+  background: #1d2b53;
+  box-shadow:
+    0 -6px 0 0 #fff1e8,
+    0 6px 0 0 #fff1e8,
+    -6px 0 0 0 #fff1e8,
+    6px 0 0 0 #fff1e8,
+    12px 12px 0 0 #000;
+}
+
+.era-web {
+  --hud: #fff;
+  --hud-font: var(--sans);
+  --hud-halo: rgba(255, 255, 255, 0.25);
+}
+.era-web #engine {
+  color: #000;
+  background: var(--gray);
+  border: none;
+  box-shadow:
+    inset -3px -3px 0 #404040,
+    inset 3px 3px 0 #fff,
+    inset -6px -6px 0 #808080;
+  font-family: var(--sans);
+}
+.era-web #engine i {
+  border-radius: 0;
+  background: #000080;
+}
+.era-web #subtitle span {
+  color: #000;
+  font-weight: 400;
+  background: var(--gray);
+  box-shadow:
+    inset -3px -3px 0 #404040,
+    inset 3px 3px 0 #fff,
+    inset -6px -6px 0 #808080,
+    inset 6px 6px 0 #dfdfdf;
+  padding: 16px 34px 18px;
+}
+
+.era-phone {
+  --hud: #fff;
+  --hud-font: var(--sans);
+  --hud-radius: 40px;
+  --hud-halo: rgba(255, 255, 255, 0.25);
+}
+.era-phone #year {
+  font-weight: 600;
+}
+.era-phone #engine {
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(20px);
+  font-family: var(--sans);
+  font-weight: 600;
+}
+.era-phone #subtitle span {
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 16px 40px 18px;
+  background: rgba(20, 20, 24, 0.66);
+}
+
+.era-neural {
+  --hud: #cfe9ff;
+  --hud-font: var(--grot);
+  --hud-radius: 12px;
+  --hud-halo: rgba(127, 212, 255, 0.25);
+}
+.era-neural #engine {
+  border-width: 2px;
+  font-family: var(--grot);
+}
+.era-neural #subtitle span {
+  font-family: var(--grot);
+  border-radius: 14px;
+  background: rgba(6, 12, 30, 0.8);
+  border: 1px solid rgba(127, 212, 255, 0.45);
+}
+
+.era-go {
+  --hud: var(--ink);
+  --hud-font: var(--serif);
+  --hud-halo: rgba(184, 50, 42, 0.3);
+}
+.era-go #engine {
+  font-family: var(--serif);
+  border-width: 2px;
+}
+.era-go #engine i {
+  background: var(--seal);
+}
+.era-go #rail u {
+  background: var(--seal);
+}
+.era-go #subtitle span {
+  font-family: var(--serif);
+  font-weight: 700;
+  color: var(--ink);
+  background: rgba(244, 239, 227, 0.94);
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+
+.era-llm,
+.era-finale {
+  --hud: var(--cream);
+  --hud-font: var(--grot);
+  --hud-radius: 8px;
+  --hud-halo: rgba(255, 176, 0, 0.3);
+}
+.era-llm #engine,
+.era-finale #engine {
+  border-width: 2px;
+  font-family: var(--grot);
+}
+.era-llm #engine i,
+.era-finale #engine i,
+.era-llm #rail u,
+.era-finale #rail u {
+  background: var(--amber);
+}
+.era-llm #subtitle span,
+.era-finale #subtitle span {
+  font-family: var(--grot);
+  color: var(--cream);
+  background: rgba(14, 14, 12, 0.82);
+  border-left: 6px solid var(--amber);
+  border-radius: 4px;
+}
+
+/* ---------------------------------------------------------------- shared bits */
+
+.abs {
+  position: absolute;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+svg {
+  overflow: visible;
+}
+
+.draw {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

@@ -6,6 +6,7 @@
 |---|---|---|
 | ACKS 官网宣传片 | 仓库根目录（下文） | 45 秒 |
 | 别再做 AI Slop 了（博客 611 讲解视频） | [`jintaoblog-611/`](jintaoblog-611/README.md) | 7 分 42 秒 |
+| 开关的觉醒 · 从图灵纸带到大模型（科普） | [`computer-to-ai/`](computer-to-ai/README.md) | 4 分 16 秒 |
 
 ---
 
