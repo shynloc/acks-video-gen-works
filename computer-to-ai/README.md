@@ -45,22 +45,29 @@
 
 ## 技术
 
-- 渲染管线沿用仓库根目录的 `scripts/render.mjs`：页面暴露 `renderFrame(t)`，每一帧都是 t 的纯函数，Playwright 逐帧截图，ffmpeg 编码。
-- 旁白是时钟：`tts.py` 写出 `timeline.json`（每句起止），画面用 `c.W(行, '词')` 在某个词被念出的那一刻触发。
-- 代码：`src/main.js`（时间轴、HUD、扫描线换代转场），`src/scenes-early.js`（序章 → 1969），`src/scenes-late.js`（像素 → 现在，含 1-bit 像素字引擎），`src/lib.js`（缓动、确定性噪声、提示点）。
+本目录是一个独立工程，不依赖仓库里的其他任何文件。
+
+- 每一帧都是时间 t 的纯函数：页面暴露 `renderFrame(t)`，`scripts/render.mjs` 用 Playwright（Chromium）逐帧截图，ffmpeg 编码；`scripts/page.mjs` 是只服务本目录的静态服务器。
+- 旁白是时钟：`scripts/tts.py` 写出 `timeline.json`（每句起止），画面用 `c.W(行, '词')` 在某个词被念出的那一刻触发。
+- 画面代码：`src/main.js`（时间轴、HUD、扫描线换代转场），`src/scenes-early.js`（序章 → 1969），`src/scenes-late.js`（像素 → 现在，含 1-bit 像素字引擎），`src/lib.js`（缓动、确定性噪声、提示点）。
 - 8-bit 段落真的是在 180 × 320 画布上画的，文字按原生像素尺寸光栅化后二值化，再用 `image-rendering: pixelated` 放大 6 倍。
 - `scripts/check_subs.mjs` 用每个时代自己的字幕字体量宽度，超出字幕条就中止构建。
 
 ## 重新构建
 
+需要 Node.js 22+、Python 3.11+。
+
 ```bash
-npm install                                  # 仓库根目录：字体、emoji 图片、Playwright
-pip install -r requirements.txt              # 仓库根目录：Pillow / NumPy / SciPy / imageio-ffmpeg
-bash computer-to-ai/scripts/build.sh         # 复用已有旁白
-bash computer-to-ai/scripts/build.sh --tts   # 重新配音（需要 ../jintaoblog-611/requirements-tts.txt 的环境）
+cd computer-to-ai
+npm install                        # 字体（@fontsource）、emoji 图片、Playwright
+npx playwright install chromium    # 本机没有 Playwright 浏览器时
+pip install -r requirements.txt    # NumPy / SciPy / Pillow / imageio-ffmpeg（自带 ffmpeg）
+bash scripts/build.sh              # 4 核 CPU 约 20 分钟
 ```
 
-预览单帧：`node scripts/render.mjs --project computer-to-ai --stills 20,60,120`
+`.cache/` 不入库，所以全新克隆第一次构建会自动合成旁白：先按 `requirements-tts.txt` 建一个虚拟环境（默认 `~/.venvs/tts`，可用 `TTS_PY` 指定解释器）。之后可用 `bash scripts/build.sh --tts` 强制重新配音。
+
+预览单帧（输出到 `output/preview/`）：`node scripts/render.mjs --stills 20,60,120`
 
 ## 素材与许可
 

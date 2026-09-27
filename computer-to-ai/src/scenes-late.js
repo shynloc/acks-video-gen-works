@@ -28,7 +28,7 @@ const emo = (ch, size = 64) => {
   const code = [...ch]
     .map((c) => c.codePointAt(0).toString(16))
     .join('-')
-  return `<img src="../../node_modules/emoji-datasource-google/img/google/64/${code}.png" style="display:block;width:${size}px;height:${size}px">`
+  return `<img src="../node_modules/emoji-datasource-google/img/google/64/${code}.png" style="display:block;width:${size}px;height:${size}px">`
 }
 
 // ---------------------------------------------------------------- pixel engine

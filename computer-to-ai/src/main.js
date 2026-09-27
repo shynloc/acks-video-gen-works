@@ -133,13 +133,11 @@ function renderChrome(t) {
   const engine = owner.def.engine ? owner.def.engine(lt, owner.cues) : ERAS[era].engine
   if (hud.engine.textContent !== engine) hud.engine.textContent = engine
 
-  // Subtitles: hold the last chunk through short pauses, clear on scene breaks.
-  let sub = null
-  for (const s of SUBS) {
-    if (s.start <= t) sub = s
-    else break
-  }
-  const text = sub && t - sub.end < 0.45 ? sub.text : ''
+  // Subtitle: the latest chunk that has started, kept up to 0.45 s past its end
+  // so it doesn't blink off between phrases.
+  const idx = SUBS.findLastIndex((sub) => sub.start <= t)
+  const sub = idx >= 0 ? SUBS[idx] : null
+  const text = sub && t < sub.end + 0.45 ? sub.text : ''
   const span = $('#subtitle span')
   if (span.textContent !== text) span.textContent = text
   span.style.opacity = sub ? prog(t, sub.start, 0.06).toFixed(3) : '0'
@@ -203,6 +201,8 @@ function render(t) {
   renderChrome(t)
 }
 
+// Sound cues: every scene renderer calls sfx() for its events unconditionally,
+// so one pass at lt = 0 with logging on collects the whole list.
 function collectCues() {
   CUE.log = []
   for (const b of built) {
@@ -210,17 +210,10 @@ function collectCues() {
     b.def.render(b.state, 0, b.cues)
     CUE.log.push({ kind: 'scene', t: b.scene.start, id: b.scene.id })
   }
-  const seen = new Set()
-  const cues = CUE.log
-    .filter((c) => {
-      const key = `${c.kind}@${c.t.toFixed(3)}`
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-    .sort((a, b) => a.t - b.t)
+  const unique = new Map()
+  for (const cue of CUE.log) unique.set(`${cue.kind}@${cue.t.toFixed(3)}`, unique.get(`${cue.kind}@${cue.t.toFixed(3)}`) ?? cue)
   CUE.log = null
-  return cues
+  return [...unique.values()].sort((a, b) => a.t - b.t)
 }
 
 // ---------- boot ----------

@@ -8,7 +8,7 @@
 @font-face {
   font-family: 'CJK Punct';
   font-weight: 400;
-  src: url(../../node_modules/@fontsource/noto-sans-sc/files/noto-sans-sc-117-400-normal.woff2)
+  src: url(../node_modules/@fontsource/noto-sans-sc/files/noto-sans-sc-117-400-normal.woff2)
     format('woff2');
   unicode-range: U+2018-201F;
 }
@@ -16,7 +16,7 @@
 @font-face {
   font-family: 'CJK Punct';
   font-weight: 700;
-  src: url(../../node_modules/@fontsource/noto-sans-sc/files/noto-sans-sc-117-700-normal.woff2)
+  src: url(../node_modules/@fontsource/noto-sans-sc/files/noto-sans-sc-117-700-normal.woff2)
     format('woff2');
   unicode-range: U+2018-201F;
 }

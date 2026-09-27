@@ -8,29 +8,35 @@ export const lerp = (a, b, p) => a + (b - a) * p
 export const prog = (t, start, dur) => clamp((t - start) / dur)
 export const TAU = Math.PI * 2
 
+// CSS-style cubic-bézier timing function: solve x(s) = x by Newton steps
+// (with a bisection fallback where the slope is flat), then return y(s).
 function cubicBezier(x1, y1, x2, y2) {
-  const cx = 3 * x1
-  const bx = 3 * (x2 - x1) - cx
-  const ax = 1 - cx - bx
-  const cy = 3 * y1
-  const by = 3 * (y2 - y1) - cy
-  const ay = 1 - cy - by
-  const sx = (s) => ((ax * s + bx) * s + cx) * s
-  const sy = (s) => ((ay * s + by) * s + cy) * s
+  const coeff = (p1, p2) => [3 * p1, 3 * (p2 - p1) - 3 * p1, 1 - 3 * (p2 - p1)]
+  const [ax, bx, cx] = coeff(x1, x2).reverse()
+  const [ay, by, cy] = coeff(y1, y2).reverse()
+  const X = (s) => ((ax * s + bx) * s + cx) * s
+  const Y = (s) => ((ay * s + by) * s + cy) * s
+  const dX = (s) => (3 * ax * s + 2 * bx) * s + cx
   return (x) => {
     if (x <= 0) return 0
     if (x >= 1) return 1
+    let s = x
+    for (let i = 0; i < 8; i++) {
+      const err = X(s) - x
+      if (Math.abs(err) < 1e-7) return Y(s)
+      const slope = dX(s)
+      if (Math.abs(slope) < 1e-6) break
+      s -= err / slope
+    }
     let lo = 0
     let hi = 1
-    let s = x
-    for (let i = 0; i < 40; i++) {
-      const v = sx(s)
-      if (Math.abs(v - x) < 1e-7) break
-      if (v < x) lo = s
+    s = x
+    for (let i = 0; i < 50 && hi - lo > 1e-7; i++) {
+      if (X(s) < x) lo = s
       else hi = s
       s = (lo + hi) / 2
     }
-    return sy(s)
+    return Y(s)
   }
 }
 
@@ -91,25 +97,16 @@ export const $$ = (selector, root = document) => [
   ...root.querySelectorAll(selector),
 ]
 
-const LENGTH_KEYS = new Set([
-  'left',
-  'top',
-  'right',
-  'bottom',
-  'width',
-  'height',
-  'fontSize',
-])
+// Style keys whose bare numbers mean pixels.
+const PX = new Set(['left', 'top', 'right', 'bottom', 'width', 'height', 'fontSize'])
+const cssValue = (key, value) => (typeof value === 'number' && PX.has(key) ? `${value}px` : value)
 
+// Absolutely positioned element with inline styles, appended to parent.
 export function put(parent, cls, html = '', box = {}, tag = 'div') {
-  const el = document.createElement(tag)
-  if (cls) el.className = cls
+  const el = Object.assign(document.createElement(tag), { className: cls || '' })
   if (html) el.innerHTML = html
   el.style.position = 'absolute'
-  for (const [key, value] of Object.entries(box)) {
-    el.style[key] =
-      typeof value === 'number' && LENGTH_KEYS.has(key) ? `${value}px` : value
-  }
+  for (const key in box) el.style[key] = cssValue(key, box[key])
   parent.appendChild(el)
   return el
 }
@@ -122,9 +119,8 @@ export function canvas(parent, w = 1080, h = 1920, box = {}) {
 }
 
 export function style(el, props) {
-  for (const [key, value] of Object.entries(props)) {
-    const v =
-      typeof value === 'number' && LENGTH_KEYS.has(key) ? `${value}px` : value
+  for (const key in props) {
+    const v = cssValue(key, props[key])
     if (el.style[key] !== v) el.style[key] = v
   }
 }
@@ -200,9 +196,12 @@ export function sfx(kind, start, extra = {}) {
 }
 
 // ---------- narration cues ----------
+// Times inside a scene, taken from timeline.json. Within a line, speech is
+// assumed to advance by reading weight: CJK characters 1, Latin letters and
+// digits 0.45, punctuation and spaces 0.15.
 
-const isCjk = (ch) => /[　-〿㐀-鿿＀-￯]/.test(ch)
-const weight = (ch) => (isCjk(ch) ? 1 : /[A-Za-z0-9]/.test(ch) ? 0.45 : 0.15)
+const readWeight = (ch) =>
+  /[　-〿㐀-鿿＀-￯]/.test(ch) ? 1 : /[A-Za-z0-9]/.test(ch) ? 0.45 : 0.15
 
 export class Cues {
   constructor(scene) {
@@ -210,24 +209,22 @@ export class Cues {
     this.start = scene.start
     this.D = scene.end - scene.start
   }
+  // Start / end of line k, relative to the scene.
   L(k) {
     return this.scene.lines[k].start - this.start
   }
   E(k) {
     return this.scene.lines[k].end - this.start
   }
-  // Moment within line k at which `phrase` starts being spoken (character-weighted).
+  // The moment line k reaches `phrase`.
   W(k, phrase) {
-    const line = this.scene.lines[k]
-    const index = line.text.indexOf(phrase)
-    if (index < 0) throw new Error(`cue “${phrase}” not in ${this.scene.id}[${k}]`)
-    let before = 0
-    let total = 0
-    for (let i = 0; i < line.text.length; i++) {
-      total += weight(line.text[i])
-      if (i < index) before += weight(line.text[i])
-    }
-    return line.start - this.start + (line.end - line.start) * (before / total)
+    const { text, start, end } = this.scene.lines[k]
+    const at = text.indexOf(phrase)
+    if (at < 0) throw new Error(`cue “${phrase}” not in ${this.scene.id}[${k}]`)
+    const chars = [...text.slice(0, at)]
+    const before = chars.reduce((sum, ch) => sum + readWeight(ch), 0)
+    const total = [...text].reduce((sum, ch) => sum + readWeight(ch), 0)
+    return start - this.start + (end - start) * (before / total)
   }
 }
 

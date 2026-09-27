@@ -8,7 +8,7 @@ marimba for the phone, pads for neural networks, a plucked zither for Go, and
 piano + strings for the language-model era and the finale. Foley comes from
 .cache/cues.json (written by the page). Everything is synthesised here.
 
-    python3 computer-to-ai/scripts/music.py
+    python3 scripts/music.py
       .cache/music.wav   music + foley only (version without narration)
       .cache/mix.wav     narration + ducked music + foley
 """
